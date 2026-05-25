@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrugResistance FastFlow® Lite – Calculadora clínica local</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #5b6577;
+      --line: #d9e1ee;
+      --brand: #0e6b7a;
+      --brand2: #124a5e;
+      --ok: #117a4a;
+      --warn: #b26a00;
+      --bad: #a13232;
+      --soft: #e9f4f6;
+      --shadow: 0 12px 28px rgba(20, 38, 70, .09);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #eaf4f6 0%, var(--bg) 260px);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    header {
+      padding: 28px 18px 18px;
+      border-bottom: 1px solid rgba(14, 107, 122, .14);
+    }
+    .wrap {
+      width: min(1200px, calc(100% - 28px));
+      margin: 0 auto;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .hero-card, .card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(217,225,238,.85);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      letter-spacing: -.03em;
+      color: #0a3c4b;
+    }
+    h2 {
+      font-size: 1.15rem;
+      margin: 0 0 14px;
+      color: #16364a;
+    }
+    h3 {
+      font-size: 1rem;
+      margin: 20px 0 10px;
+      color: #16364a;
+    }
+    p { margin: 0 0 10px; }
+    .small, small { color: var(--muted); font-size: .88rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--brand2);
+      border: 1px solid rgba(14,107,122,.18);
+      font-size: .86rem;
+      font-weight: 650;
+    }
+    main { padding: 20px 0 42px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    label {
+      display: block;
+      margin: 0 0 6px;
+      font-weight: 650;
+      font-size: .9rem;
+      color: #29364b;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(14,107,122,.65);
+      box-shadow: 0 0 0 4px rgba(14,107,122,.11);
+    }
+    textarea { min-height: 86px; resize: vertical; }
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 0;
+    }
+    button {
+      border: 0;
+      background: var(--brand);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(14,107,122,.20);
+      transition: transform .08s, filter .15s;
+    }
+    button:hover { filter: brightness(1.03); }
+    button:active { transform: translateY(1px); }
+    button.secondary {
+      background: #eef5f7;
+      color: #124a5e;
+      border: 1px solid rgba(14,107,122,.22);
+      box-shadow: none;
+    }
+    button.warn {
+      background: #fff6e8;
+      color: #8a5200;
+      border: 1px solid rgba(178,106,0,.24);
+      box-shadow: none;
+    }
+    button.danger {
+      background: #fff0f0;
+      color: var(--bad);
+      border: 1px solid rgba(161,50,50,.25);
+      box-shadow: none;
+    }
+    .sticky-actions {
+      position: sticky;
+      bottom: 10px;
+      z-index: 20;
+      margin: 16px auto 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(217,225,238,.85);
+      border-radius: 18px;
+      padding: 10px;
+      width: fit-content;
+      box-shadow: var(--shadow);
+    }
+    .table-scroll {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+    th, td {
+      padding: 9px 8px;
+      border-bottom: 1px solid #edf1f7;
+      vertical-align: top;
+      text-align: left;
+      font-size: .88rem;
+    }
+    th {
+      background: #f2f7fa;
+      color: #21354b;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td input, td select, td textarea {
+      min-width: 110px;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: .86rem;
+    }
+    td textarea { min-width: 180px; min-height: 42px; }
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 76px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      background: #eef5f7;
+      color: #124a5e;
+    }
+    .score-good { background: #e8f6ef; color: var(--ok); }
+    .score-mid { background: #fff6e8; color: var(--warn); }
+    .score-low { background: #fff0f0; color: var(--bad); }
+    .flag {
+      display: inline-block;
+      padding: 3px 7px;
+      margin: 2px 4px 2px 0;
+      border-radius: 999px;
+      font-size: .76rem;
+      font-weight: 700;
+      background: #f3f5f9;
+      color: #465266;
+    }
+    .flag.warn { background: #fff6e8; color: #8a5200; }
+    .flag.bad { background: #fff0f0; color: var(--bad); }
+    .flag.ok { background: #e8f6ef; color: var(--ok); }
+    .note-preview {
+      white-space: pre-wrap;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .86rem;
+      min-height: 260px;
+    }
+    .links-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    .links-list a {
+      display: block;
+      text-decoration: none;
+      color: #0e5f70;
+      background: #f6fafb;
+      border: 1px solid #dbeaf0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 650;
+    }
+    .footer-note {
+      border-left: 4px solid var(--brand);
+      padding: 10px 12px;
+      background: #f3fafb;
+      border-radius: 0 12px 12px 0;
+      color: #244053;
+    }
+    .hidden { display: none !important; }
+    .print-only { display: none; }
+    @media (max-width: 900px) {
+      .hero, .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .links-list { grid-template-columns: 1fr; }
+      .sticky-actions { width: min(100%, calc(100vw - 20px)); }
+    }
+    @media print {
+      body { background: #fff; color: #000; }
+      header, main > .wrap > .grid, main > .wrap > .card:not(.print-target), .sticky-actions, .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .wrap { width: 100%; margin: 0; }
+      .print-target {
+        display: block !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .note-preview {
+        border: 0;
+        padding: 0;
+        white-space: pre-wrap;
+        font-size: 10.5pt;
+        font-family: "Times New Roman", serif;
+        line-height: 1.35;
+      }
+      @page { size: letter; margin: 16mm; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <section class="hero-card">
+      <h1>DrugResistance FastFlow® Lite</h1>
+      <p><strong>Calculadora local de apoyo a decisión antimicrobiana</strong> para navegador. Captura datos clínicos, compara opciones, genera resumen y prepara una nota clínica imprimible/guardable como PDF.</p>
+      <p class="small">Funciona en el navegador del usuario. No envía datos a servidores. No contiene ni expone el motor interno, pesos protegidos ni fórmulas propietarias.</p>
+      <div class="badge-row">
+        <span class="badge">Top-3 opciones</span>
+        <span class="badge">Tabla de factores</span>
+        <span class="badge">Nota clínica PDF</span>
+        <span class="badge">Stewardship</span>
+      </div>
+    </section>
+    <aside class="hero-card">
+      <h2>Uso seguro</h2>
+      <p class="small">Ingrese patógeno/fenotipo, sitio, gravedad, sensibilidad local y condiciones del paciente. La herramienta no diagnostica ni da dosis. Consulte guías oficiales para dosis, duración y ajustes.</p>
+      <div class="footer-note small">La priorización pública de esta app es orientativa. Se recomienda validar con infectología, microbiología y farmacia clínica, especialmente en UCI, sepsis, embarazo, pediatría, trasplante o falla renal/hepática.</div>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="grid">
+      <div class="card">
+        <h2>1) Contexto clínico</h2>
+        <div class="grid-3">
+          <div>
+            <label for="patientId">Paciente / ID interno</label>
+            <input id="patientId" placeholder="Sin datos identificables si va a compartir" />
+          </div>
+          <div>
+            <label for="service">Servicio</label>
+            <input id="service" placeholder="Urgencias, UCI, MI, Cirugía..." />
+          </div>
+          <div>
+            <label for="clinician">Médico responsable</label>
+            <input id="clinician" placeholder="Nombre / cédula opcional" />
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:12px;">
+          <div>
+            <label for="pathogen">Patógeno/fenotipo</label>
+            <select id="pathogen">
+              <option value="">Seleccione...</option>
+              <option>Enterobacterales ESBL</option>
+              <option>Enterobacterales AmpC</option>
+              <option>CRE-KPC</option>
+              <option>CRE-NDM / MBL</option>
+              <option>CRE-OXA-48-like</option>
+              <option>Pseudomonas aeruginosa DTR</option>
+              <option>Acinetobacter baumannii CRAB</option>
+              <option>Staphylococcus aureus MRSA</option>
+              <option>Enterococcus faecium VRE</option>
+              <option>Stenotrophomonas maltophilia</option>
+              <option>Candida auris / hongo resistente</option>
+              <option>Otro / pendiente</option>
+            </select>
+          </div>
+          <div>
+            <label for="site">Sitio de infección</label>
+            <select id="site">
+              <option value="">Seleccione...</option>
+              <option>ITU complicada / pielonefritis</option>
+              <option>Bacteriemia / sepsis</option>
+              <option>Neumonía hospitalaria / NAVM</option>
+              <option>Intraabdominal complicada</option>
+              <option>Piel y tejidos blandos</option>
+              <option>SNC / meningitis</option>
+              <option>Osteoarticular / prótesis</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div>
+            <label for="severity">Gravedad</label>
+            <select id="severity">
+              <option>Estable</option>
+              <option>Grave</option>
+              <option>Choque séptico / UCI</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label for="micro">Microbiología y datos locales</label>
+          <textarea id="micro" placeholder="Cultivo, sitio de muestra, MIC si existe, % sensibilidad local por opción, fecha del antibiograma..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2) Condiciones del paciente</h2>
+        <div class="grid-4">
+          <div>
+            <label for="age">Edad</label>
+            <input id="age" type="number" min="0" placeholder="años" />
+          </div>
+          <div>
+            <label for="weight">Peso</label>
+            <input id="weight" type="number" min="0" placeholder="kg" />
+          </div>
+          <div>
+            <label for="egfr">FG / CrCl</label>
+            <input id="egfr" type="number" min="0" placeholder="mL/min" />
+          </div>
+          <div>
+            <label for="pregnancy">Embarazo</label>
+            <select id="pregnancy">
+              <option>No / no aplica</option>
+              <option>Sí</option>
+              <option>Desconocido</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:12px;">
+          <div>
+            <label for="allergy">Alergias</label>
+            <input id="allergy" placeholder="β-lactámicos, sulfas..." />
+          </div>
+          <div>
+            <label for="hepatic">Hepatopatía</label>
+            <select id="hepatic">
+              <option>No documentada</option>
+              <option>Leve/moderada</option>
+              <option>Grave</option>
+            </select>
+          </div>
+          <div>
+            <label for="immune">Inmunosupresión</label>
+            <select id="immune">
+              <option>No documentada</option>
+              <option>Sí</option>
+              <option>Desconocida</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label for="meds">Medicamentos/interacciones relevantes</label>
+          <textarea id="meds" placeholder="Anticoagulantes, ISRS, inmunosupresores, QT prolongado, anticonvulsivos, etc."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3) Opciones antimicrobianas a comparar</h2>
+      <p class="small">Puede escribir opciones manualmente o precargar sugerencias por fenotipo. Ingrese sensibilidad local cuando exista; si no está disponible, marque “Desconocida” en comentarios y deje el porcentaje vacío.</p>
+      <div class="row-actions">
+        <button type="button" onclick="prefillByPathogen()">Precargar sugerencias por fenotipo</button>
+        <button type="button" class="secondary" onclick="addOption()">Agregar opción</button>
+        <button type="button" class="warn" onclick="loadExample()">Cargar ejemplo de prueba</button>
+        <button type="button" class="danger" onclick="clearOptions()">Vaciar opciones</button>
+      </div>
+      <div class="table-scroll" style="margin-top:14px;">
+        <table id="optionsTable">
+          <thead>
+            <tr>
+              <th>Opción</th>
+              <th>Sensibilidad local %</th>
+              <th>Evidencia</th>
+              <th>Toxicidad</th>
+              <th>Disponibilidad</th>
+              <th>Ajuste al sitio</th>
+              <th>Coste</th>
+              <th>AWaRe / restricción</th>
+              <th>Interacciones / contraindicaciones</th>
+              <th>Comentario</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small" style="margin-top:10px;">El “puntaje público” es una ayuda visual para ordenar opciones capturadas. No reproduce cálculos internos protegidos y debe revisarse con guías, antibiograma, PK/PD, foco, fuente y condición clínica.</p>
+    </section>
+
+    <section class="grid" style="margin-top:18px;">
+      <div class="card">
+        <h2>4) Resultado y resumen</h2>
+        <div class="row-actions">
+          <button type="button" onclick="calculate()">Calcular / actualizar</button>
+          <button type="button" class="secondary" onclick="copyNote()">Copiar nota</button>
+          <button type="button" class="secondary" onclick="saveLocal()">Guardar en este navegador</button>
+          <button type="button" class="secondary" onclick="restoreLocal()">Restaurar guardado</button>
+        </div>
+        <div id="results" style="margin-top:14px;"></div>
+      </div>
+      <div class="card">
+        <h2>Ligas de interés</h2>
+        <ul class="links-list">
+          <li><a target="_blank" rel="noopener" href="https://www.idsociety.org/practice-guideline/amr-guidance/">IDSA AMR Guidance</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.who.int/publications/b/61917">WHO AWaRe Antibiotic Book</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.who.int/publications/i/item/9789240093461">WHO BPPL 2024</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.cdc.gov/antimicrobial-resistance/about/index.html">CDC Antimicrobial Resistance</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.ecdc.europa.eu/en/antimicrobial-resistance/surveillance-and-disease-data">ECDC AMR Surveillance</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.paho.org/en/topics/antimicrobial-resistance">OPS/PAHO RAM</a></li>
+          <li><a target="_blank" rel="noopener" href="https://www.gob.mx/cofepris">COFEPRIS</a></li>
+        </ul>
+        <h3>Campos obligatorios sugeridos</h3>
+        <p class="small">Patógeno/fenotipo, sitio, gravedad, sensibilidad local por antibiótico, disponibilidad, coste relativo, alergias, embarazo, FG/hepatopatía e interacciones.</p>
+      </div>
+    </section>
+
+    <section class="card print-target" style="margin-top:18px;">
+      <h2 class="no-print">5) Nota clínica generada</h2>
+      <div class="row-actions no-print">
+        <button type="button" onclick="generateNote()">Generar nota clínica</button>
+        <button type="button" onclick="downloadPDF()">Descargar / guardar como PDF</button>
+        <button type="button" class="secondary" onclick="downloadTxt()">Descargar nota .txt</button>
+      </div>
+      <div id="notePreview" class="note-preview" style="margin-top:14px;">La nota aparecerá aquí después de calcular o presionar “Generar nota clínica”.</div>
+    </section>
+
+    <div class="sticky-actions no-print">
+      <button type="button" onclick="calculate()">Calcular</button>
+      <button type="button" onclick="downloadPDF()">PDF</button>
+      <button type="button" class="secondary" onclick="window.scrollTo({top:0,behavior:'smooth'})">Arriba</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  const DISCLAIMER = "Nota: esta recomendación se basa en las referencias cargadas en Conocimientos. No sustituye el juicio clínico; consulte la guía oficial correspondiente para dosis y ajustes.";
+  const LINKS = [
+    ["IDSA AMR Guidance", "https://www.idsociety.org/practice-guideline/amr-guidance/"],
+    ["WHO AWaRe Antibiotic Book", "https://www.who.int/publications/b/61917"],
+    ["WHO Bacterial Priority Pathogens List 2024", "https://www.who.int/publications/i/item/9789240093461"],
+    ["CDC Antimicrobial Resistance", "https://www.cdc.gov/antimicrobial-resistance/about/index.html"],
+    ["ECDC AMR Surveillance", "https://www.ecdc.europa.eu/en/antimicrobial-resistance/surveillance-and-disease-data"],
+    ["OPS/PAHO RAM", "https://www.paho.org/en/topics/antimicrobial-resistance"],
+    ["COFEPRIS", "https://www.gob.mx/cofepris"]
+  ];
+
+  const templates = {
+    "Enterobacterales ESBL": [
+      "Meropenem / ertapenem según gravedad y sitio",
+      "Imipenem-cilastatina",
+      "Amikacina o aminoglucósido si susceptible y foco urinario",
+      "TMP-SMX si susceptible y paciente apto",
+      "Ciprofloxacino/levofloxacino si susceptible y paciente apto"
+    ],
+    "Enterobacterales AmpC": [
+      "Cefepime si susceptible y clínicamente apropiado",
+      "Meropenem / imipenem-cilastatina",
+      "TMP-SMX si susceptible",
+      "Fluoroquinolona si susceptible",
+      "Aminoglucósido si susceptible y foco urinario"
+    ],
+    "CRE-KPC": [
+      "Ceftazidima-avibactam",
+      "Meropenem-vaborbactam",
+      "Imipenem-cilastatina-relebactam",
+      "Cefiderocol",
+      "Tigeciclina/eravaciclina si sitio no urinario y perfil apto"
+    ],
+    "CRE-NDM / MBL": [
+      "Ceftazidima-avibactam + aztreonam",
+      "Cefiderocol",
+      "Aztreonam si susceptible y disponible",
+      "Tigeciclina/eravaciclina si sitio no urinario y perfil apto",
+      "Colistina como rescate si no hay alternativas"
+    ],
+    "CRE-OXA-48-like": [
+      "Ceftazidima-avibactam",
+      "Cefiderocol",
+      "Meropenem si susceptible y exposición optimizada",
+      "Tigeciclina/eravaciclina si sitio no urinario y perfil apto",
+      "Aminoglucósido si susceptible y foco urinario"
+    ],
+    "Pseudomonas aeruginosa DTR": [
+      "Ceftolozano-tazobactam",
+      "Ceftazidima-avibactam",
+      "Imipenem-cilastatina-relebactam",
+      "Cefiderocol",
+      "Aminoglucósido si susceptible y foco urinario"
+    ],
+    "Acinetobacter baumannii CRAB": [
+      "Sulbactam-durlobactam si disponible",
+      "Ampicilina-sulbactam / sulbactam optimizado",
+      "Cefiderocol",
+      "Minociclina o tigeciclina según sitio y susceptibilidad",
+      "Polimixina/colistina como rescate"
+    ],
+    "Staphylococcus aureus MRSA": [
+      "Vancomicina",
+      "Daptomicina",
+      "Linezolid",
+      "Ceftarolina",
+      "TMP-SMX / doxiciclina / clindamicina si infección leve y susceptible"
+    ],
+    "Enterococcus faecium VRE": [
+      "Linezolid",
+      "Daptomicina",
+      "Tigeciclina si sitio intraabdominal/tejidos y no bacteriemia",
+      "Ampicilina si susceptible",
+      "Consulta a infectología para combinación/rescate"
+    ],
+    "Stenotrophomonas maltophilia": [
+      "TMP-SMX si susceptible",
+      "Minociclina",
+      "Levofloxacino si susceptible",
+      "Cefiderocol en escenarios seleccionados",
+      "Ceftazidima-avibactam + aztreonam en escenarios seleccionados"
+    ],
+    "Candida auris / hongo resistente": [
+      "Equinocandina si susceptible/empírico inicial",
+      "Anfotericina B liposomal según sitio y susceptibilidad",
+      "Azol si susceptible",
+      "Retiro/control de catéter o fuente si aplica",
+      "Consulta a infectología/micología"
+    ],
+    "Otro / pendiente": [
+      "Opción 1 según antibiograma",
+      "Opción 2 según antibiograma",
+      "Opción 3 según disponibilidad local"
+    ]
+  };
+
+  function optionRow(data = {}) {
+    const tbody = document.querySelector("#optionsTable tbody");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input class="drug" value="${escapeAttr(data.drug || "")}" placeholder="Antibiótico / combinación" /></td>
+      <td><input class="sens" type="number" min="0" max="100" value="${escapeAttr(data.sens ?? "")}" placeholder="0-100" /></td>
+      <td><select class="evidence">
+        ${sel(["Alta","Moderada","Baja","Desconocida"], data.evidence || "Moderada")}
+      </select></td>
+      <td><select class="tox">
+        ${sel(["Baja","Moderada","Alta","Desconocida"], data.tox || "Moderada")}
+      </select></td>
+      <td><select class="availability">
+        ${sel(["Disponible","Limitada","No disponible","Desconocida"], data.availability || "Disponible")}
+      </select></td>
+      <td><select class="sitefit">
+        ${sel(["Adecuado","Dudoso","Inadecuado","Desconocido"], data.sitefit || "Adecuado")}
+      </select></td>
+      <td><select class="cost">
+        ${sel(["Bajo","Medio","Alto","Desconocido"], data.cost || "Medio")}
+      </select></td>
+      <td><select class="aware">
+        ${sel(["Access","Watch","Reserve","Restricción local","No clasificado"], data.aware || "Watch")}
+      </select></td>
+      <td><select class="interactions">
+        ${sel(["Sin alerta","Monitorizar","Evitar/contraindicado","Desconocido"], data.interactions || "Sin alerta")}
+      </select></td>
+      <td><textarea class="comment" placeholder="MIC, PK/PD, disponibilidad, fuente...">${escapeHtml(data.comment || "")}</textarea></td>
+      <td><button type="button" class="danger" onclick="this.closest('tr').remove()">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function sel(items, value) {
+    return items.map(i => `<option ${i === value ? "selected" : ""}>${escapeHtml(i)}</option>`).join("");
+  }
+
+  function escapeHtml(v) {
+    return String(v).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(v) { return escapeHtml(v); }
+
+  function addOption() { optionRow(); }
+
+  function clearOptions() {
+    if (confirm("¿Vaciar todas las opciones?")) {
+      document.querySelector("#optionsTable tbody").innerHTML = "";
+      document.getElementById("results").innerHTML = "";
+    }
+  }
+
+  function prefillByPathogen() {
+    const pathogen = document.getElementById("pathogen").value || "Otro / pendiente";
+    const items = templates[pathogen] || templates["Otro / pendiente"];
+    const tbody = document.querySelector("#optionsTable tbody");
+    tbody.innerHTML = "";
+    items.forEach(drug => optionRow({drug}));
+  }
+
+  function loadExample() {
+    document.getElementById("patientId").value = "Ejemplo sin identificadores";
+    document.getElementById("service").value = "UCI";
+    document.getElementById("clinician").value = "";
+    document.getElementById("pathogen").value = "CRE-KPC";
+    document.getElementById("site").value = "Bacteriemia / sepsis";
+    document.getElementById("severity").value = "Grave";
+    document.getElementById("micro").value = "Hemocultivo con Enterobacterales CRE-KPC. Confirmar MIC y sensibilidad local antes de decisión final.";
+    document.getElementById("age").value = 62;
+    document.getElementById("weight").value = 74;
+    document.getElementById("egfr").value = 48;
+    document.getElementById("pregnancy").value = "No / no aplica";
+    document.getElementById("allergy").value = "Sin alergia documentada";
+    document.getElementById("hepatic").value = "No documentada";
+    document.getElementById("immune").value = "Desconocida";
+    document.getElementById("meds").value = "Revisar QT, anticoagulación e inmunosupresores.";
+    const tbody = document.querySelector("#optionsTable tbody");
+    tbody.innerHTML = "";
+    [
+      {drug:"Ceftazidima-avibactam", sens:92, evidence:"Alta", tox:"Moderada", availability:"Disponible", sitefit:"Adecuado", cost:"Alto", aware:"Reserve", interactions:"Monitorizar", comment:"Verificar MIC, foco y control de fuente."},
+      {drug:"Meropenem-vaborbactam", sens:88, evidence:"Alta", tox:"Moderada", availability:"Limitada", sitefit:"Adecuado", cost:"Alto", aware:"Reserve", interactions:"Monitorizar", comment:"Opción si disponible y compatible con perfil local."},
+      {drug:"Cefiderocol", sens:78, evidence:"Moderada", tox:"Moderada", availability:"Limitada", sitefit:"Adecuado", cost:"Alto", aware:"Reserve", interactions:"Monitorizar", comment:"Considerar si resistencia o no disponibilidad de alternativas preferentes."},
+      {drug:"Colistina", sens:65, evidence:"Baja", tox:"Alta", availability:"Disponible", sitefit:"Dudoso", cost:"Medio", aware:"Reserve", interactions:"Monitorizar", comment:"Rescate; vigilar nefro/neurotoxicidad."}
+    ].forEach(optionRow);
+    calculate();
+  }
+
+  function readInputs() {
+    return {
+      patientId: v("patientId"), service: v("service"), clinician: v("clinician"),
+      pathogen: v("pathogen"), site: v("site"), severity: v("severity"), micro: v("micro"),
+      age: v("age"), weight: v("weight"), egfr: v("egfr"), pregnancy: v("pregnancy"),
+      allergy: v("allergy"), hepatic: v("hepatic"), immune: v("immune"), meds: v("meds"),
+      options: [...document.querySelectorAll("#optionsTable tbody tr")].map(row => ({
+        drug: row.querySelector(".drug").value.trim(),
+        sens: row.querySelector(".sens").value,
+        evidence: row.querySelector(".evidence").value,
+        tox: row.querySelector(".tox").value,
+        availability: row.querySelector(".availability").value,
+        sitefit: row.querySelector(".sitefit").value,
+        cost: row.querySelector(".cost").value,
+        aware: row.querySelector(".aware").value,
+        interactions: row.querySelector(".interactions").value,
+        comment: row.querySelector(".comment").value.trim()
+      })).filter(o => o.drug)
+    };
+  }
+  function v(id) { return document.getElementById(id).value.trim(); }
+
+  function pointsMap(value, map, fallback) {
+    return Object.prototype.hasOwnProperty.call(map, value) ? map[value] : fallback;
+  }
+
+  function scoreOption(o, context) {
+    const sensNum = o.sens === "" ? null : Math.max(0, Math.min(100, Number(o.sens)));
+    const sensPts = sensNum === null || Number.isNaN(sensNum) ? 2.0 : sensNum / 25;
+    let pts = 0;
+    pts += sensPts;
+    pts += pointsMap(o.evidence, {"Alta":3, "Moderada":2, "Baja":1, "Desconocida":1.2}, 1.2);
+    pts += pointsMap(o.tox, {"Baja":3, "Moderada":2, "Alta":0.5, "Desconocida":1.5}, 1.5);
+    pts += pointsMap(o.availability, {"Disponible":3, "Limitada":1.5, "No disponible":0, "Desconocida":1}, 1);
+    pts += pointsMap(o.sitefit, {"Adecuado":3, "Dudoso":1.5, "Inadecuado":0, "Desconocido":1}, 1);
+    pts += pointsMap(o.cost, {"Bajo":2, "Medio":1.2, "Alto":0.6, "Desconocido":1}, 1);
+    pts += pointsMap(o.aware, {"Access":0.6, "Watch":0.2, "Reserve":-0.4, "Restricción local":-0.3, "No clasificado":0}, 0);
+    pts += pointsMap(o.interactions, {"Sin alerta":0.8, "Monitorizar":0, "Evitar/contraindicado":-2.5, "Desconocido":-0.3}, 0);
+
+    const flags = [];
+    const lower = o.drug.toLowerCase();
+    const site = context.site.toLowerCase();
+    const allergy = context.allergy.toLowerCase();
+    const egfr = Number(context.egfr);
+    const pregnancy = context.pregnancy === "Sí";
+
+    if (sensNum === null || Number.isNaN(sensNum)) flags.push(["warn", "Sensibilidad local no capturada"]);
+    else if (sensNum < 70) flags.push(["bad", "Cobertura local subóptima"]);
+    else if (sensNum >= 90) flags.push(["ok", "Cobertura local alta"]);
+
+    if (o.availability === "No disponible") flags.push(["bad", "No disponible"]);
+    if (o.availability === "Limitada") flags.push(["warn", "Disponibilidad limitada"]);
+    if (o.sitefit === "Inadecuado") flags.push(["bad", "No ajusta al sitio"]);
+    if (o.sitefit === "Dudoso") flags.push(["warn", "Ajuste al sitio dudoso"]);
+    if (o.tox === "Alta") flags.push(["warn", "Toxicidad alta"]);
+    if (o.interactions === "Evitar/contraindicado") flags.push(["bad", "Contraindicación/interacción"]);
+
+    if (allergy.includes("beta") || allergy.includes("β") || allergy.includes("penic") || allergy.includes("cefa")) {
+      if (["meropenem","imipenem","ertapenem","cef","ceft","piper","ampicilina","aztreonam"].some(x => lower.includes(x))) {
+        flags.push(["warn", "Revisar alergia a β-lactámicos"]);
+      }
+    }
+    if (allergy.includes("sulfa") && (lower.includes("tmp") || lower.includes("sulf") || lower.includes("trimet"))) {
+      flags.push(["bad", "Alergia a sulfas"]);
+      pts -= 2;
+    }
+    if (!Number.isNaN(egfr) && egfr > 0 && egfr < 30) {
+      if (["colistina","amikacina","gentamicina","tobramicina","vancomicina","nitrofurantoína","nitrofurantoina"].some(x => lower.includes(x))) {
+        flags.push(["warn", "FG <30: ajuste/evitar según guía"]);
+        pts -= 0.7;
+      }
+    }
+    if (pregnancy) {
+      if (["tigeciclina","minociclina","doxiciclina","fluoroquinolona","ciprofloxacino","levofloxacino","tmp","sulf","amikacina","gentamicina","tobramicina"].some(x => lower.includes(x))) {
+        flags.push(["warn", "Embarazo: revisar seguridad"]);
+        pts -= 0.8;
+      }
+    }
+    if (site.includes("neumonía") || site.includes("navm")) {
+      if (lower.includes("daptomicina")) {
+        flags.push(["bad", "Daptomicina no es opción para neumonía"]);
+        pts -= 3;
+      }
+    }
+    if (site.includes("bacteriemia") || site.includes("sepsis")) {
+      if (["nitrofurantoína","nitrofurantoina","fosfomicina oral","tigeciclina"].some(x => lower.includes(x))) {
+        flags.push(["warn", "Evitar/valorar en bacteriemia según caso"]);
+        pts -= 1.3;
+      }
+    }
+    if (site.includes("itu") || site.includes("pielonefritis")) {
+      if (["tigeciclina","daptomicina"].some(x => lower.includes(x))) {
+        flags.push(["warn", "Ajuste urinario limitado/depende de caso"]);
+        pts -= 0.8;
+      }
+    }
+
+    const maxPublic = 19.4;
+    const score = Math.round(Math.max(0, Math.min(100, (pts / maxPublic) * 100)));
+    const label = score >= 75 ? "Preferente si concuerda con guía/AST" : score >= 55 ? "Considerar con cautela" : "No preferente / rescate";
+    return {...o, score, flags, label};
+  }
+
+  function calculate() {
+    const data = readInputs();
+    const missing = missingData(data);
+    const scored = data.options.map(o => scoreOption(o, data)).sort((a,b) => b.score - a.score);
+    renderResults(scored, missing, data);
+    generateNote(scored, missing, data);
+    return {scored, missing, data};
+  }
+
+  function missingData(data) {
+    const miss = [];
+    if (!data.pathogen) miss.push("patógeno/fenotipo");
+    if (!data.site) miss.push("sitio de infección");
+    if (!data.severity) miss.push("gravedad");
+    if (!data.micro) miss.push("microbiología/antibiograma local");
+    if (!data.egfr) miss.push("FG/CrCl");
+    if (!data.allergy) miss.push("alergias");
+    if (!data.options.length) miss.push("opciones antimicrobianas");
+    if (data.options.some(o => o.sens === "")) miss.push("% sensibilidad local por todas las opciones");
+    return [...new Set(miss)];
+  }
+
+  function renderResults(scored, missing, data) {
+    const el = document.getElementById("results");
+    if (!scored.length) {
+      el.innerHTML = `<div class="result-card"><strong>Sin opciones para comparar.</strong><p class="small">Agregue opciones o precargue sugerencias por fenotipo.</p></div>`;
+      return;
+    }
+    const top = scored.slice(0,3);
+    const missingHtml = missing.length ? `<p><span class="flag warn">Datos faltantes</span> ${missing.join(", ")}.</p>` : `<p><span class="flag ok">Datos mínimos completos</span></p>`;
+    el.innerHTML = `
+      ${missingHtml}
+      ${top.map((o, idx) => resultCard(o, idx)).join("")}
+      <div class="result-card">
+        <strong>Interpretación</strong>
+        <p class="small">${interpretation(top, missing, data)}</p>
+      </div>
+    `;
+  }
+
+  function resultCard(o, idx) {
+    const cls = o.score >= 75 ? "score-good" : o.score >= 55 ? "score-mid" : "score-low";
+    return `
+      <div class="result-card">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:start;">
+          <div>
+            <strong>${idx+1}. ${escapeHtml(o.drug)}</strong>
+            <p class="small">${escapeHtml(o.label)}. ${escapeHtml(o.comment || "Sin comentario adicional.")}</p>
+          </div>
+          <span class="score-pill ${cls}">${o.score}/100</span>
+        </div>
+        <div>${o.flags.map(f => `<span class="flag ${f[0]}">${escapeHtml(f[1])}</span>`).join("")}</div>
+      </div>
+    `;
+  }
+
+  function interpretation(top, missing, data) {
+    if (!top.length) return "No hay opciones capturadas.";
+    const lead = top[0];
+    let txt = `La opción mejor posicionada por los datos capturados es ${lead.drug}, siempre que el antibiograma/MIC, el sitio de infección, la disponibilidad y el perfil del paciente lo confirmen.`;
+    if (missing.length) txt += ` El resultado es provisional porque faltan: ${missing.join(", ")}.`;
+    if (data.severity.includes("Choque")) txt += " En choque séptico/UCI, priorice cobertura temprana, control de fuente, hemocultivos y reevaluación estrecha.";
+    txt += " Reevalúe a 48–72 h para desescalar, optimizar o suspender según cultivos y evolución.";
+    return txt;
+  }
+
+  function generateNote(scoredArg, missingArg, dataArg) {
+    let bundle;
+    if (scoredArg && dataArg) bundle = {scored: scoredArg, missing: missingArg || [], data: dataArg};
+    else bundle = calculateNoRender();
+    const {scored, missing, data} = bundle;
+    const now = new Date();
+    const top = scored.slice(0,3);
+    const allRows = scored.map((o, i) => {
+      const flags = o.flags.map(f => f[1]).join("; ") || "Sin alertas";
+      return `${i+1}. ${o.drug} | Puntaje público: ${o.score}/100 | Cobertura: ${o.sens || "ND"}% | Evidencia: ${o.evidence} | Toxicidad: ${o.tox} | Disponibilidad: ${o.availability} | Sitio: ${o.sitefit} | Coste: ${o.cost} | Stewardship: ${o.aware} | Alertas: ${flags} | Comentario: ${o.comment || "—"}`;
+    }).join("\n");
+
+    const plan = top.length ? [
+      `Plan A: considerar ${top[0].drug} si sensibilidad/MIC, foco y disponibilidad lo respaldan.`,
+      top[1] ? `Plan B: ${top[1].drug} como alternativa si hay contraindicación, falla, no disponibilidad o mejor ajuste individual.` : "Plan B: definir alternativa cuando haya más datos.",
+      top[2] ? `Plan C/rescate: ${top[2].drug} en escenarios seleccionados o con interconsulta.` : "Plan C/rescate: interconsulta a infectología si no hay opciones adecuadas."
+    ].join("\n") : "Sin opciones capturadas; completar antibiograma y disponibilidad local.";
+
+    const safety = safetyText(data, scored);
+    const links = LINKS.map(([label, url]) => `- ${label}: ${url}`).join("\n");
+    const miss = missing.length ? missing.join(", ") : "No se identifican datos mínimos faltantes en la captura.";
+    const note = `NOTA CLÍNICA – APOYO A DECISIÓN ANTIMICROBIANA
+Fecha/hora: ${now.toLocaleString("es-MX")}
+Paciente/ID interno: ${data.patientId || "No capturado"}
+Servicio: ${data.service || "No capturado"}
+Médico responsable: ${data.clinician || "No capturado"}
+
+MOTIVO
+Jerarquización de opciones antimicrobianas ante sospecha/confirmación de resistencia.
+
+CONTEXTO
+Patógeno/fenotipo: ${data.pathogen || "No capturado"}
+Sitio de infección: ${data.site || "No capturado"}
+Gravedad: ${data.severity || "No capturada"}
+Microbiología/datos locales: ${data.micro || "No capturados"}
+
+CONDICIONES DEL PACIENTE
+Edad: ${data.age || "ND"} años | Peso: ${data.weight || "ND"} kg | FG/CrCl: ${data.egfr || "ND"} mL/min
+Embarazo: ${data.pregnancy || "ND"} | Alergias: ${data.allergy || "ND"}
+Hepatopatía: ${data.hepatic || "ND"} | Inmunosupresión: ${data.immune || "ND"}
+Medicamentos/interacciones: ${data.meds || "ND"}
+
+RESUMEN EJECUTIVO
+${top.length ? top.map((o, i) => `${i+1}) ${o.drug}: ${o.label}; puntaje público ${o.score}/100.`).join("\n") : "No hay opciones para jerarquizar."}
+
+RECOMENDACIÓN / PLAN
+${plan}
+
+TABLA COMPACTA DE FACTORES
+${allRows || "Sin tabla: no se capturaron opciones."}
+
+DATOS FALTANTES O A CONFIRMAR
+${miss}
+
+SEGURIDAD Y STEWARDSHIP
+${safety}
+- No se proporcionan dosis en esta herramienta; definir dosis, intervalo, infusión y duración con la guía oficial, FG/CrCl, peso, MIC, sitio de infección y PK/PD.
+- Tomar/confirmar cultivos antes de antibiótico si no retrasa atención crítica.
+- Revalorar a 48–72 h para desescalar, ajustar o suspender según cultivos, foco y evolución.
+- Considerar interconsulta con infectología/farmacia clínica en Reserve, combinaciones, falla terapéutica, embarazo, UCI, trasplante, SNC, bacteriemia persistente o toxicidad relevante.
+
+LIGAS DE INTERÉS
+${links}
+
+LIMITACIÓN
+Herramienta local tipo Lite. No contiene ni expone el motor interno, pesos protegidos ni fórmula propietaria. El puntaje público solo ordena los datos capturados y no sustituye guías ni juicio clínico.
+
+${DISCLAIMER}`;
+    document.getElementById("notePreview").textContent = note;
+    return note;
+  }
+
+  function calculateNoRender() {
+    const data = readInputs();
+    const missing = missingData(data);
+    const scored = data.options.map(o => scoreOption(o, data)).sort((a,b) => b.score - a.score);
+    return {scored, missing, data};
+  }
+
+  function safetyText(data, scored) {
+    const items = [];
+    if (!data.egfr) items.push("Confirmar FG/CrCl antes de dosis o fármacos nefrotóxicos.");
+    if (data.pregnancy === "Sí" || data.pregnancy === "Desconocido") items.push("Revisar seguridad en embarazo/lactancia antes de elegir tetraciclinas, quinolonas, aminoglucósidos, TMP-SMX u otras opciones con alerta.");
+    if (!data.allergy) items.push("Documentar alergias y tipo de reacción.");
+    if (data.allergy && data.allergy.toLowerCase().includes("sulfa")) items.push("Evitar TMP-SMX si alergia a sulfas clínicamente relevante.");
+    if (data.allergy && /beta|β|penic|cefa/i.test(data.allergy)) items.push("Verificar historia y severidad de alergia a β-lactámicos antes de carbapenémicos/cefalosporinas/penicilinas.");
+    if (scored.some(o => o.tox === "Alta")) items.push("Hay opciones con toxicidad alta; priorizar monitorización renal, hepática, hematológica o neurológica según fármaco.");
+    if (scored.some(o => o.aware === "Reserve" || o.aware === "Restricción local")) items.push("Uso de fármacos Reserve/restringidos requiere justificación, cultivos y desescalamiento oportuno.");
+    if (!items.length) items.push("No se detectaron alertas mayores con la información capturada; mantener farmacovigilancia y reevaluación clínica.");
+    return items.map(x => `- ${x}`).join("\n");
+  }
+
+  function downloadPDF() {
+    generateNote();
+    setTimeout(() => window.print(), 120);
+  }
+
+  function downloadTxt() {
+    const note = generateNote();
+    const blob = new Blob([note], {type: "text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+    a.href = url;
+    a.download = `nota_clinica_fastflow_${stamp}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyNote() {
+    const note = generateNote();
+    try {
+      await navigator.clipboard.writeText(note);
+      alert("Nota copiada al portapapeles.");
+    } catch (e) {
+      alert("No se pudo copiar automáticamente. Seleccione el texto de la nota y copie manualmente.");
+    }
+  }
+
+  function saveLocal() {
+    const data = readInputs();
+    localStorage.setItem("fastflow_lite_case", JSON.stringify(data));
+    alert("Caso guardado localmente en este navegador.");
+  }
+
+  function restoreLocal() {
+    const raw = localStorage.getItem("fastflow_lite_case");
+    if (!raw) return alert("No hay caso guardado en este navegador.");
+    const data = JSON.parse(raw);
+    ["patientId","service","clinician","pathogen","site","severity","micro","age","weight","egfr","pregnancy","allergy","hepatic","immune","meds"].forEach(id => {
+      if (document.getElementById(id)) document.getElementById(id).value = data[id] || "";
+    });
+    const tbody = document.querySelector("#optionsTable tbody");
+    tbody.innerHTML = "";
+    (data.options || []).forEach(optionRow);
+    calculate();
+  }
+
+  // Estado inicial
+  optionRow();
+</script>
+</body>
+</html>
